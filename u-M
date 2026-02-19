@@ -1,0 +1,81 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import java.nio.file.*;
+import java.util.List;
+
+public class AnalizadorGUI extends JFrame {
+
+    private JTextArea areaTexto;
+
+    public AnalizadorGUI() {
+        setTitle("Analizador de Documento");
+        setSize(600, 500);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        JButton botonCargar = new JButton("Cargar Documento");
+        areaTexto = new JTextArea();
+        areaTexto.setEditable(false);
+
+        JScrollPane scroll = new JScrollPane(areaTexto);
+
+        botonCargar.addActionListener(e -> seleccionarArchivo());
+
+        add(botonCargar, BorderLayout.NORTH);
+        add(scroll, BorderLayout.CENTER);
+    }
+
+    private void seleccionarArchivo() {
+        JFileChooser fileChooser = new JFileChooser();
+        int resultado = fileChooser.showOpenDialog(this);
+
+        if (resultado == JFileChooser.APPROVE_OPTION) {
+            File archivo = fileChooser.getSelectedFile();
+            analizarArchivo(archivo);
+        }
+    }
+
+    private void analizarArchivo(File archivo) {
+        try {
+            String texto = new String(Files.readAllBytes(archivo.toPath()));
+            analizarTexto(texto);
+        } catch (IOException e) {
+            areaTexto.setText("Error al leer el archivo.");
+        }
+    }
+
+    private void analizarTexto(String texto) {
+
+        String[] lineas = texto.split("\\.");
+
+        areaTexto.setText("");
+
+        areaTexto.append("--- VALIDACIONES ---\n");
+        buscar(lineas, List.of("validar", "verificar", "comprobar", "si cumple"));
+
+        areaTexto.append("\n--- DECISIONES ---\n");
+        buscar(lineas, List.of("si ", "cuando", "entonces", "en caso de"));
+
+        areaTexto.append("\n--- FALLAS ---\n");
+        buscar(lineas, List.of("error", "falla", "rechazar", "invalido"));
+
+        areaTexto.append("\n--- DEPENDENCIAS ---\n");
+        buscar(lineas, List.of("depende de", "requiere", "necesita"));
+    }
+
+    private void buscar(String[] lineas, List<String> palabras) {
+        for (String linea : lineas) {
+            for (String palabra : palabras) {
+                if (linea.toLowerCase().contains(palabra)) {
+                    areaTexto.append("- " + linea.trim() + "\n");
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new AnalizadorGUI().setVisible(true));
+    }
+}
